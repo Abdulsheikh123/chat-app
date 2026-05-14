@@ -1,0 +1,70 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  number        String    @unique
+  password      String
+  profileImage  String?
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  posts         Post[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  content     String?  // For text messages
+  fileUrl     String?  // For images, videos, pdfs
+  fileType    FileType @default(TEXT)
+  fileName    String?
+  fileSize    Int?     // In bytes
+  
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  isRead      Boolean  @default(false)
+  likedBy     String[] @default([]) // User IDs who liked the message
+  savedBy     String[] @default([]) // User IDs who saved the message
+  reactions   Json     @default("[]") // Array of { userId: string, emoji: string }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum FileType {
+  TEXT
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model Post { 
+  id          Int      @id @default(autoincrement()) 
+  title       String?
+  content     String
+  imageUrl    String?
+  likesCount  Int      @default(0)
+  likedBy     String[] @default([]) // Array of User IDs who liked
+  savedBy     String[] @default([]) // Array of User IDs who saved
+  
+  author      User     @relation(fields: [authorId], references: [id]) 
+  authorId    String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+} 
